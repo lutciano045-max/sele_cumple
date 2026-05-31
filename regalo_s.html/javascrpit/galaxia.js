@@ -10,7 +10,43 @@ window.addEventListener('load', () => {
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
     });
-// --- MANEJO DE CLICK Y ARRASTRE DE ÓRBITA 3D (MOUSE) ---
+
+    // =========================================================================
+    // 🌌 VARIABLES DE CÁMARA 3D, ZOOM Y ANIMACIÓN (¡ESTO ERA LO QUE FALTA!)
+    // =========================================================================
+    let introProgress = 0;       
+    let zoomCámara = 3.8; 
+    let zoomObjetivo = 1.65; 
+    const minZoom = 0.5;     
+    const maxZoom = 3.5;     
+
+    // Variables de rotación tridimensional
+    let rotX = 0, rotY = 0;      
+    let targetRotX = 0, targetRotY = 0; 
+    const fov = 600; 
+
+    // Control de arrastre (Click & Drag)
+    let estaArrastrando = false;
+    let clickStartX = 0, clickStartY = 0;
+    let rotStartX = 0, rotStartY = 0;
+    let mouseX = width / 2, mouseY = height / 2;
+    let esferaApuntada = null;
+    let modalAbierto = false;
+
+    // =========================================================================
+    // 📱 INTERACCIONES (MOUSE, TOUCH Y ZOOM REORGANIZADOS SIN DUPLICADOS)
+    // =========================================================================
+    
+    // Zoom con la rueda del ratón
+    canvas.addEventListener('wheel', (e) => {
+        if (modalAbierto) return;
+        e.preventDefault();
+        zoomObjetivo -= e.deltaY * 0.0015;
+        if (zoomObjetivo < minZoom) zoomObjetivo = minZoom;
+        if (zoomObjetivo > maxZoom) zoomObjetivo = maxZoom;
+    }, { passive: false });
+
+    // Eventos de Mouse
     canvas.addEventListener('mousedown', (e) => {
         if (modalAbierto) return;
         estaArrastrando = true;
@@ -37,46 +73,45 @@ window.addEventListener('load', () => {
         estaArrastrando = false;
     });
 
-    // === 📱 NUEVO: SOPORTE PARA PANTALLAS TÁCTILES (MÓVILES) ===
+    window.addEventListener('click', () => {
+        if (esferaApuntada && !modalAbierto && !estaArrastrando) abrirTarjeta(esferaApuntada);
+    });
+
+    // Soporte para pantallas táctiles (Celulares)
     canvas.addEventListener('touchstart', (e) => {
         if (modalAbierto) return;
         estaArrastrando = true;
-        
-        const toque = e.touches[0]; // Captura el primer dedo que toca la pantalla
+        const toque = e.touches[0];
         clickStartX = toque.clientX;
         clickStartY = toque.clientY;
         rotStartX = targetRotX;
         rotStartY = targetRotY;
-        
-        // Actualiza la posición simulada del cursor para que detecte la esfera al tocarla
         mouseX = toque.clientX;
         mouseY = toque.clientY;
     });
 
     window.addEventListener('touchmove', (e) => {
         if (estaArrastrando) {
-            // e.preventDefault() evita que la página suba o baje (haga scroll) mientras arrastras la galaxia
             if (e.cancelable) e.preventDefault(); 
-            
             const toque = e.touches[0];
             mouseX = toque.clientX;
             mouseY = toque.clientY;
-
             const deltaX = toque.clientX - clickStartX;
             const deltaY = toque.clientY - clickStartY;
             targetRotY = rotStartY + (deltaX * 0.006);
             targetRotX = rotStartX + (deltaY * 0.006);
-
             if (targetRotX > Math.PI / 2.1) targetRotX = Math.PI / 2.1;
             if (targetRotX < -Math.PI / 2.1) targetRotX = -Math.PI / 2.1;
         }
-    }, { passive: false }); // 'passive: false' es obligatorio para poder cancelar el scroll nativo del celular
+    }, { passive: false });
 
     window.addEventListener('touchend', () => {
         estaArrastrando = false;
     });
 
-// === CONFIGURACIÓN DE LAS 8 ESFERAS CORREGIDA ===
+    // =========================================================================
+    // 📸 CONFIGURACIÓN DE LAS 8 ESFERAS DE RECUERDOS (RUTAS LIMPIAS)
+    // =========================================================================
     const esferasDatos = [
         { titulo: 'Nuestra pirmera monada juntos.', texto: 'Aquel dia pasamos la tarde juntos y te lleve en la bici hasta la parada.', imagen: 'img/sele3.jpeg' },
         { titulo: 'La vez que vimos la mejor pelicula de todos los tiempos.', texto: 'Bailamos y boludeamos en la calle muy tarde. ', imagen: 'img/sele1.jpeg' },
@@ -89,15 +124,13 @@ window.addEventListener('load', () => {
     ];
 
     esferasDatos.forEach((esfera) => {
-        // Distribución aleatoria para dispersión total dentro del radio del cuásar (150 a 550)
         esfera.distancia = Math.random() * (550 - 150) + 150; 
         esfera.angulo = Math.random() * Math.PI * 2;
-        
         esfera.color = '#ffffff'; 
         esfera.radioEsfera = 38; 
         esfera.imageObject = new Image();
         esfera.imageObject.src = esfera.imagen;
-        esfera.velocidad = 0; // Fijas para estética inmersiva
+        esfera.velocidad = 0;
     });
 
     // === PARTÍCULAS DE LOS CHORROS POLARES (JETS) ===
@@ -129,26 +162,21 @@ window.addEventListener('load', () => {
         });
     }
 
-  // === PARTÍCULAS DE LA ESTELA (CORREGIDO Y ESTRUCTURADO) ===
+    // === PARTÍCULAS DE LA ESTELA (POLVO CÓSMICO) ===
     const numParticulasDisco = 1900; 
     const particulasDisco = [];
-    
     for (let i = 0; i < numParticulasDisco; i++) {
         const r = Math.random() * 560 + 50; 
         const angulo = Math.random() * Math.PI * 2;
-        
-        // Selección de color basada en probabilidad
         let colorBase;
         const rand = Math.random();
         if (rand < 0.48) {
-            colorBase = 'rgba(240, 140, 70, '; // Naranja
+            colorBase = 'rgba(240, 140, 70, '; 
         } else if (rand < 0.92) {
-            colorBase = 'rgba(85, 155, 225, '; // Azul
+            colorBase = 'rgba(85, 155, 225, '; 
         } else {
-            colorBase = 'rgba(225, 240, 255, '; // Blanco
+            colorBase = 'rgba(225, 240, 255, '; 
         }
-
-        // Definición de tamaño para que se vean como polvo fino separado
         const tamaño = Math.random() < 0.88 ? (Math.random() * 0.5 + 0.4) : (Math.random() * 1.5 + 1.1);
 
         particulasDisco.push({
@@ -160,50 +188,8 @@ window.addEventListener('load', () => {
             size: tamaño
         });
     }
-    let mouseX = width / 2, mouseY = height / 2;
-    let esferaApuntada = null;
-    let modalAbierto = false;
 
-    // --- INTERFAZ DE ZOOM CON LA RUEDA DEL RATÓN ---
-    canvas.addEventListener('wheel', (e) => {
-        if (modalAbierto) return;
-        e.preventDefault();
-        zoomObjetivo -= e.deltaY * 0.0015;
-        if (zoomObjetivo < minZoom) zoomObjetivo = minZoom;
-        if (zoomObjetivo > maxZoom) zoomObjetivo = maxZoom;
-    }, { passive: false });
-
-    // --- MANEJO DE CLICK Y ARRASTRE DE ÓRBITA 3D ---
-    canvas.addEventListener('mousedown', (e) => {
-        if (modalAbierto) return;
-        estaArrastrando = true;
-        clickStartX = e.clientX;
-        clickStartY = e.clientY;
-        rotStartX = targetRotX;
-        rotStartY = targetRotY;
-    });
-
-    window.addEventListener('mousemove', (e) => {
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-        if (estaArrastrando) {
-            const deltaX = e.clientX - clickStartX;
-            const deltaY = e.clientY - clickStartY;
-            targetRotY = rotStartY + (deltaX * 0.006);
-            targetRotX = rotStartX + (deltaY * 0.006);
-            if (targetRotX > Math.PI / 2.1) targetRotX = Math.PI / 2.1;
-            if (targetRotX < -Math.PI / 2.1) targetRotX = -Math.PI / 2.1;
-        }
-    });
-
-    window.addEventListener('mouseup', () => {
-        estaArrastrando = false;
-    });
-
-    window.addEventListener('click', () => {
-        if (esferaApuntada && !modalAbierto && !estaArrastrando) abrirTarjeta(esferaApuntada);
-    });
-
+    // === SISTEMA INTERFAZ MODAL ===
     const modalOverlay = document.getElementById('modalOverlay');
     const modalImg = document.getElementById('modalImg');
     const modalTitle = document.getElementById('modalTitle');
@@ -243,6 +229,7 @@ window.addEventListener('load', () => {
         ctx.restore();
     }
 
+    // === BUCLE DE ANIMACIÓN PRINCIPAL ===
     function animate() {
         ctx.fillStyle = 'rgba(1, 1, 5, 0.22)'; ctx.fillRect(0, 0, width, height);
         ctx.globalCompositeOperation = 'lighter';
@@ -267,7 +254,7 @@ window.addEventListener('load', () => {
             }
         }
 
-        // 2. RENDER ESTELA (NUEVO DISCO EN AZULES Y NARANJAS SEPARADOS)
+        // 2. RENDER ESTELA (POLVO DE LAS ÓRBITAS)
         for (let i = 0; i < numParticulasDisco; i++) {
             const p = particulasDisco[i];
             p.angulo += p.velocidadBase * 0.65; 
@@ -286,15 +273,14 @@ window.addEventListener('load', () => {
             }
         }
 
-        // 3. SINGULARIDAD CENTRAL (MICRO CORAZÓN)
+        // 3. SINGULARIDAD CENTRAL (CORAZÓN LATIENTE)
         let factorBrote = 0; if (introProgress > 0.2) { const tBrote = Math.min(1, (introProgress - 0.2) / 0.8); const periodo = 0.35; factorBrote = Math.pow(2, -10 * tBrote) * Math.sin((tBrote - periodo / 4) * (Math.PI * 2) / periodo) + 1; }
         if (factorBrote > 0) dibujarCorazonSingularidad(cx, cy, 0.90 * factorBrote * zoomCámara);
 
-        // 4. ÓRBITAS DE LAS 8 esferas TARJETA (GIGANTES Y FIJAS EN 3D CON IMÁGENES)
+        // 4. ÓRBITAS 3D DE LAS ESFERAS CON IMÁGENES
         let cursorEnEsfera = false; if (!modalAbierto) esferaApuntada = null;
         for (let i = 0; i < esferasDatos.length; i++) {
             const e = esferasDatos[i];
-            // Físicas 3D estáticas
             const distActual = e.distancia * Math.min(1, introProgress * 1.08);
             const alphaEsfera = Math.max(0, Math.min(1, (introProgress - 0.3) * 2.5));
             let eX_base = Math.cos(e.angulo) * distActual; let eZ_base = Math.sin(e.angulo) * distActual;
@@ -309,7 +295,7 @@ window.addEventListener('load', () => {
             if (distanciaMouse < (radioFinalPerspectiva * zoomCámara) + 12 && !modalAbierto && introProgress > 0.85) { esHover = true; cursorEnEsfera = true; esferaApuntada = e; }
 
             if (alphaEsfera > 0) {
-                // Aura del planeta
+                // Aura luminosa
                 ctx.save();
                 ctx.globalAlpha = alphaEsfera;
                 ctx.beginPath();
@@ -317,21 +303,19 @@ window.addEventListener('load', () => {
                 ctx.shadowBlur = esHover ? 50 : 30; ctx.shadowColor = e.color;
                 ctx.strokeStyle = 'rgba(255, 60, 90, 0.22)'; ctx.lineWidth = 1; ctx.stroke();
                 
-                // Esfera interactiva
+                // Base de esfera blanca
                 ctx.beginPath();
                 ctx.arc(eX, eY, esHover ? radioFinalPerspectiva * 1.35 : radioFinalPerspectiva, 0, Math.PI * 2);
                 ctx.fillStyle = esHover ? '#ffffff' : e.color; ctx.fill();
                 ctx.restore();
 
-                // === NUEVA LÓGICA PARA DIBUJAR LA IMAGEN DENTRO DE LA ESFERA ===
+                // Recorte e inserción de la foto
                 if (e.imageObject.complete && e.imageObject.naturalWidth > 0 && alphaEsfera > 0.5) {
                     ctx.save();
                     ctx.globalAlpha = alphaEsfera - 0.2;
                     ctx.beginPath();
-                    // Creamos una máscara circular para recortar la imagen
                     ctx.arc(eX, eY, esHover ? radioFinalPerspectiva * 1.3 : radioFinalPerspectiva * 0.95, 0, Math.PI * 2);
                     ctx.clip();
-                    // Dibujamos la imagen centrada y escalada en 3D
                     const imgSize = (esHover ? radioFinalPerspectiva * 2.6 : radioFinalPerspectiva * 1.9);
                     ctx.drawImage(e.imageObject, eX - imgSize / 2, eY - imgSize / 2, imgSize, imgSize);
                     ctx.restore();
@@ -342,22 +326,15 @@ window.addEventListener('load', () => {
         ctx.globalCompositeOperation = 'source-over'; requestAnimationFrame(animate);
     }
     animate();
-/// === SISTEMA DE AUDIO DE FONDO MEJORADO ===
+
+    // === REPRODUCTOR DE MÚSICA AMBIENTAL ===
     const musica = document.getElementById('musicaFondo');
-
-    if (!musica) {
-        console.error("❌ ERROR: La etiqueta <audio id='musicaFondo'> no está dentro de galaxya.html");
-    } else {
-        console.log("✅ ÉXITO: ¡La galaxia encontró el reproductor de música!");
-    }
-
-    // Se activa inmediatamente al hacer clic o arrastrar el fondo negro
     window.addEventListener('pointerdown', () => {
         if (musica && musica.paused) {
-            musica.volume = 0.3; // Volumen suave ambiental
+            musica.volume = 0.3; 
             musica.play()
                 .then(() => console.log("🔊 ¡Música iniciada con éxito!"))
-                .catch(error => console.log("Esperando una interacción directa...", error));
+                .catch(error => console.log("Esperando interacción...", error));
         }
     });
 });
