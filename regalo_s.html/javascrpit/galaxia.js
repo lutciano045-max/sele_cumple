@@ -1,0 +1,363 @@
+window.addEventListener('load', () => {
+    const canvas = document.getElementById('galaxyCanvas');
+    if (!canvas) return; 
+    const ctx = canvas.getContext('2d');
+
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    });
+// --- MANEJO DE CLICK Y ARRASTRE DE ÓRBITA 3D (MOUSE) ---
+    canvas.addEventListener('mousedown', (e) => {
+        if (modalAbierto) return;
+        estaArrastrando = true;
+        clickStartX = e.clientX;
+        clickStartY = e.clientY;
+        rotStartX = targetRotX;
+        rotStartY = targetRotY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        if (estaArrastrando) {
+            const deltaX = e.clientX - clickStartX;
+            const deltaY = e.clientY - clickStartY;
+            targetRotY = rotStartY + (deltaX * 0.006);
+            targetRotX = rotStartX + (deltaY * 0.006);
+            if (targetRotX > Math.PI / 2.1) targetRotX = Math.PI / 2.1;
+            if (targetRotX < -Math.PI / 2.1) targetRotX = -Math.PI / 2.1;
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        estaArrastrando = false;
+    });
+
+    // === 📱 NUEVO: SOPORTE PARA PANTALLAS TÁCTILES (MÓVILES) ===
+    canvas.addEventListener('touchstart', (e) => {
+        if (modalAbierto) return;
+        estaArrastrando = true;
+        
+        const toque = e.touches[0]; // Captura el primer dedo que toca la pantalla
+        clickStartX = toque.clientX;
+        clickStartY = toque.clientY;
+        rotStartX = targetRotX;
+        rotStartY = targetRotY;
+        
+        // Actualiza la posición simulada del cursor para que detecte la esfera al tocarla
+        mouseX = toque.clientX;
+        mouseY = toque.clientY;
+    });
+
+    window.addEventListener('touchmove', (e) => {
+        if (estaArrastrando) {
+            // e.preventDefault() evita que la página suba o baje (haga scroll) mientras arrastras la galaxia
+            if (e.cancelable) e.preventDefault(); 
+            
+            const toque = e.touches[0];
+            mouseX = toque.clientX;
+            mouseY = toque.clientY;
+
+            const deltaX = toque.clientX - clickStartX;
+            const deltaY = toque.clientY - clickStartY;
+            targetRotY = rotStartY + (deltaX * 0.006);
+            targetRotX = rotStartX + (deltaY * 0.006);
+
+            if (targetRotX > Math.PI / 2.1) targetRotX = Math.PI / 2.1;
+            if (targetRotX < -Math.PI / 2.1) targetRotX = -Math.PI / 2.1;
+        }
+    }, { passive: false }); // 'passive: false' es obligatorio para poder cancelar el scroll nativo del celular
+
+    window.addEventListener('touchend', () => {
+        estaArrastrando = false;
+    });
+
+// === CONFIGURACIÓN DE LAS 8 ESFERAS CORREGIDA ===
+    const esferasDatos = [
+        { titulo: 'Nuestra pirmera monada juntos.', texto: 'Aquel dia pasamos la tarde juntos y te lleve en la bici hasta la parada.', imagen: 'img/sele3.jpeg' },
+        { titulo: 'La vez que vimos la mejor pelicula de todos los tiempos.', texto: 'Bailamos y boludeamos en la calle muy tarde. ', imagen: 'img/sele1.jpeg' },
+        { titulo: 'Nuestras Boludeces', texto: 'Una de las mejores noche que pase con vs, aunque aundaba muy seco 😅.', imagen: 'img/sele2.jpeg' },
+        { titulo: 'Primer Viaje', texto: 'Una linda mañana con mates, aunque hizo frio y nos agarro la lluvia.', imagen: 'img/sele5.jpeg' },
+        { titulo: 'Tu Sonrisa', texto: 'Mi razon para estar feliz.', imagen: 'img/sele6.jpeg' },
+        { titulo: 'Mi mascarilla', texto: 'Cuando me hice mi primera mascarilla con vs, y me dejaste solo porque te dormiste 😒.', imagen: 'img/sele4.jpeg' },
+        { titulo: 'Mi hogar', texto: 'Foto tuyas de pequeña me hacen dar cuenta que sos mi hogar y alguien muy delicada.', imagen: 'img/sele7.jpeg' },
+        { titulo: 'Fenix', texto: 'Nuestra historia fue media parecida a la del fenix, que resurge de las cenizas para volver a ser lo que fue.', imagen: 'img/sele8.jpeg' }
+    ];
+
+    esferasDatos.forEach((esfera) => {
+        // Distribución aleatoria para dispersión total dentro del radio del cuásar (150 a 550)
+        esfera.distancia = Math.random() * (550 - 150) + 150; 
+        esfera.angulo = Math.random() * Math.PI * 2;
+        
+        esfera.color = '#ffffff'; 
+        esfera.radioEsfera = 38; 
+        esfera.imageObject = new Image();
+        esfera.imageObject.src = esfera.imagen;
+        esfera.velocidad = 0; // Fijas para estética inmersiva
+    });
+
+    // === PARTÍCULAS DE LOS CHORROS POLARES (JETS) ===
+    const numParticulasExplosion = 400;
+    const particulasExplosion = [];
+    for (let i = 0; i < numParticulasExplosion; i++) {
+        let colorBase = Math.random() < 0.5 ? 'rgba(255, 145, 75, ' : 'rgba(90, 165, 235, ';
+        const esChorroPolor = Math.random() < 0.35;
+        let vx, vy, vz;
+
+        if (esChorroPolor) {
+            const dir = Math.random() < 0.5 ? 1 : -1;
+            vx = (Math.random() - 0.5) * 4;
+            vy = (Math.random() * 20 + 10) * dir; 
+            vz = (Math.random() - 0.5) * 4;
+        } else {
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos((Math.random() * 2) - 1);
+            const mag = Math.random() * 15 + 5;
+            vx = mag * Math.sin(phi) * Math.cos(theta);
+            vy = mag * Math.cos(phi) * 0.25; 
+            vz = mag * Math.sin(phi) * Math.sin(theta);
+        }
+
+        particulasExplosion.push({
+            x: 0, y: 0, z: 0, vx: vx, vy: vy, vz: vz,
+            size: Math.random() * 3 + 1, color: colorBase, alpha: 1,
+            decay: Math.random() * 0.012 + 0.006     
+        });
+    }
+
+  // === PARTÍCULAS DE LA ESTELA (CORREGIDO Y ESTRUCTURADO) ===
+    const numParticulasDisco = 1900; 
+    const particulasDisco = [];
+    
+    for (let i = 0; i < numParticulasDisco; i++) {
+        const r = Math.random() * 560 + 50; 
+        const angulo = Math.random() * Math.PI * 2;
+        
+        // Selección de color basada en probabilidad
+        let colorBase;
+        const rand = Math.random();
+        if (rand < 0.48) {
+            colorBase = 'rgba(240, 140, 70, '; // Naranja
+        } else if (rand < 0.92) {
+            colorBase = 'rgba(85, 155, 225, '; // Azul
+        } else {
+            colorBase = 'rgba(225, 240, 255, '; // Blanco
+        }
+
+        // Definición de tamaño para que se vean como polvo fino separado
+        const tamaño = Math.random() < 0.88 ? (Math.random() * 0.5 + 0.4) : (Math.random() * 1.5 + 1.1);
+
+        particulasDisco.push({
+            r: r, 
+            angulo: angulo,
+            yOffset: (Math.random() - 0.5) * (50 * (1 - r / 610)),
+            velocidadBase: (1 / Math.sqrt(r)) * 6.8, 
+            color: colorBase, 
+            size: tamaño
+        });
+    }
+    let mouseX = width / 2, mouseY = height / 2;
+    let esferaApuntada = null;
+    let modalAbierto = false;
+
+    // --- INTERFAZ DE ZOOM CON LA RUEDA DEL RATÓN ---
+    canvas.addEventListener('wheel', (e) => {
+        if (modalAbierto) return;
+        e.preventDefault();
+        zoomObjetivo -= e.deltaY * 0.0015;
+        if (zoomObjetivo < minZoom) zoomObjetivo = minZoom;
+        if (zoomObjetivo > maxZoom) zoomObjetivo = maxZoom;
+    }, { passive: false });
+
+    // --- MANEJO DE CLICK Y ARRASTRE DE ÓRBITA 3D ---
+    canvas.addEventListener('mousedown', (e) => {
+        if (modalAbierto) return;
+        estaArrastrando = true;
+        clickStartX = e.clientX;
+        clickStartY = e.clientY;
+        rotStartX = targetRotX;
+        rotStartY = targetRotY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        if (estaArrastrando) {
+            const deltaX = e.clientX - clickStartX;
+            const deltaY = e.clientY - clickStartY;
+            targetRotY = rotStartY + (deltaX * 0.006);
+            targetRotX = rotStartX + (deltaY * 0.006);
+            if (targetRotX > Math.PI / 2.1) targetRotX = Math.PI / 2.1;
+            if (targetRotX < -Math.PI / 2.1) targetRotX = -Math.PI / 2.1;
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        estaArrastrando = false;
+    });
+
+    window.addEventListener('click', () => {
+        if (esferaApuntada && !modalAbierto && !estaArrastrando) abrirTarjeta(esferaApuntada);
+    });
+
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalImg = document.getElementById('modalImg');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalText = document.getElementById('modalText');
+    const btnCerrar = document.getElementById('btnCerrar');
+
+    if (btnCerrar && modalOverlay) {
+        btnCerrar.addEventListener('click', () => {
+            modalOverlay.classList.remove('active');
+            setTimeout(() => { modalAbierto = false; }, 500);
+        });
+    }
+
+    function abrirTarjeta(datos) {
+        modalAbierto = true;
+        if (modalImg) modalImg.src = datos.imagen;
+        if (modalTitle) modalTitle.innerText = datos.titulo;
+        if (modalText) modalText.innerText = datos.texto;
+        if (modalOverlay) modalOverlay.classList.add('active');
+    }
+
+    function dibujarCorazonSingularidad(xCentro, yCentro, escala) {
+        const latido = 1 + Math.sin(Date.now() * 0.005) * 0.08;
+        const escalaFinal = escala * latido;
+        ctx.save();
+        ctx.beginPath();
+        ctx.translate(xCentro, yCentro);
+        ctx.scale(escalaFinal, -escalaFinal); 
+        for (let t = 0; t < Math.PI * 2; t += 0.04) {
+            const x = 16 * Math.pow(Math.sin(t), 3);
+            const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+            if (t === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.shadowBlur = 30; ctx.shadowColor = '#ff3b63'; ctx.fillStyle = '#ffffff'; ctx.fill();
+        ctx.fillStyle = 'rgba(235, 15, 65, 0.9)'; ctx.fill();
+        ctx.restore();
+    }
+
+    function animate() {
+        ctx.fillStyle = 'rgba(1, 1, 5, 0.22)'; ctx.fillRect(0, 0, width, height);
+        ctx.globalCompositeOperation = 'lighter';
+        const cx = width / 2; const cy = height / 2;
+        rotX += (targetRotX - rotX) * 0.05; rotY += (targetRotY - rotY) * 0.05;
+        if (introProgress < 1) { introProgress += (1.005 - introProgress) * 0.015; if (introProgress > 0.999) introProgress = 1; }
+        zoomCámara += (zoomObjetivo - zoomCámara) * 0.05;
+        const cosX = Math.cos(rotX), sinX = Math.sin(rotX); const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+
+        // 1. RENDER EXPLOSIÓN INICIAL 3D
+        for (let i = 0; i < particulasExplosion.length; i++) {
+            const p = particulasExplosion[i]; if (p.alpha <= 0) continue;
+            p.x += p.vx; p.y += p.vy; p.z += p.vz; p.alpha -= p.decay;
+            let x1 = p.x * cosY - p.z * sinY; let z1 = p.x * sinY + p.z * cosY;
+            let y2 = p.y * cosX - z1 * sinX; let z2 = p.y * sinX + z1 * cosX;
+            if (z2 <= -fov + 60) continue; 
+            let perspectiva = (fov / (fov + z2)) * zoomCámara; if (perspectiva > 8) perspectiva = 8; 
+            const pX = cx + x1 * perspectiva; const pY = cy + y2 * perspectiva;
+            if (pX >= 0 && pX <= width && pY >= 0 && pY <= height) {
+                ctx.beginPath(); ctx.arc(pX, pY, Math.max(0.1, p.size * (perspectiva / zoomCámara)), 0, Math.PI * 2);
+                ctx.fillStyle = p.color + Math.max(0, p.alpha) + ')'; ctx.fill();
+            }
+        }
+
+        // 2. RENDER ESTELA (NUEVO DISCO EN AZULES Y NARANJAS SEPARADOS)
+        for (let i = 0; i < numParticulasDisco; i++) {
+            const p = particulasDisco[i];
+            p.angulo += p.velocidadBase * 0.65; 
+            const radioActual = p.r * Math.min(1, introProgress * 1.3);
+            let xBase = Math.cos(p.angulo) * radioActual; let zBase = Math.sin(p.angulo) * radioActual;
+            let yBase = p.yOffset * Math.min(1, introProgress * 1.3);
+            let xRot = xBase * cosY - zBase * sinY; let zRot1 = xBase * sinY + zBase * cosY;
+            let yRot = yBase * cosX - zRot1 * sinX; let zRotFinal = yBase * sinX + zRot1 * cosX;
+            if (zRotFinal <= -fov + 60) continue; 
+            let perspectiva = (fov / (fov + zRotFinal)) * zoomCámara; if (perspectiva > 8) perspectiva = 8; 
+            const alphaActual = Math.min(1, (560 - p.r) / 250) * Math.min(1, introProgress * 2.5);
+            const pX = cx + xRot * perspectiva; const pY = cy + yRot * perspectiva;
+            if (alphaActual > 0 && pX >= 0 && pX <= width && pY >= 0 && pY <= height) {
+                ctx.beginPath(); ctx.arc(pX, pY, Math.max(0.1, p.size * (perspectiva / zoomCámara)), 0, Math.PI * 2);
+                ctx.fillStyle = p.color + alphaActual + ')'; ctx.fill();
+            }
+        }
+
+        // 3. SINGULARIDAD CENTRAL (MICRO CORAZÓN)
+        let factorBrote = 0; if (introProgress > 0.2) { const tBrote = Math.min(1, (introProgress - 0.2) / 0.8); const periodo = 0.35; factorBrote = Math.pow(2, -10 * tBrote) * Math.sin((tBrote - periodo / 4) * (Math.PI * 2) / periodo) + 1; }
+        if (factorBrote > 0) dibujarCorazonSingularidad(cx, cy, 0.90 * factorBrote * zoomCámara);
+
+        // 4. ÓRBITAS DE LAS 8 esferas TARJETA (GIGANTES Y FIJAS EN 3D CON IMÁGENES)
+        let cursorEnEsfera = false; if (!modalAbierto) esferaApuntada = null;
+        for (let i = 0; i < esferasDatos.length; i++) {
+            const e = esferasDatos[i];
+            // Físicas 3D estáticas
+            const distActual = e.distancia * Math.min(1, introProgress * 1.08);
+            const alphaEsfera = Math.max(0, Math.min(1, (introProgress - 0.3) * 2.5));
+            let eX_base = Math.cos(e.angulo) * distActual; let eZ_base = Math.sin(e.angulo) * distActual;
+            let eX_rot = eX_base * cosY - eZ_base * sinY; let eZ_rot1 = eX_base * sinY + eZ_base * cosY;
+            let eY_rot = -eZ_rot1 * sinX; let eZ_rotFinal = eZ_rot1 * cosX;
+            if (eZ_rotFinal <= -fov + 60) continue;
+            let perspectivaPlaneta = (fov / (fov + eZ_rotFinal)) * zoomCámara;
+            if (perspectivaPlaneta > 8) perspectivaPlaneta = 8;
+            const eX = cx + eX_rot * perspectivaPlaneta; const eY = cy + eY_rot * perspectivaPlaneta;
+            const dx = mouseX - eX; const dy = mouseY - eY; const distanciaMouse = Math.sqrt(dx * dx + dy * dy);
+            let esHover = false; const radioFinalPerspectiva = e.radioEsfera * (perspectivaPlaneta / zoomCámara) * Math.min(1, introProgress);
+            if (distanciaMouse < (radioFinalPerspectiva * zoomCámara) + 12 && !modalAbierto && introProgress > 0.85) { esHover = true; cursorEnEsfera = true; esferaApuntada = e; }
+
+            if (alphaEsfera > 0) {
+                // Aura del planeta
+                ctx.save();
+                ctx.globalAlpha = alphaEsfera;
+                ctx.beginPath();
+                ctx.arc(eX, eY, radioFinalPerspectiva * 1.7, 0, Math.PI * 2);
+                ctx.shadowBlur = esHover ? 50 : 30; ctx.shadowColor = e.color;
+                ctx.strokeStyle = 'rgba(255, 60, 90, 0.22)'; ctx.lineWidth = 1; ctx.stroke();
+                
+                // Esfera interactiva
+                ctx.beginPath();
+                ctx.arc(eX, eY, esHover ? radioFinalPerspectiva * 1.35 : radioFinalPerspectiva, 0, Math.PI * 2);
+                ctx.fillStyle = esHover ? '#ffffff' : e.color; ctx.fill();
+                ctx.restore();
+
+                // === NUEVA LÓGICA PARA DIBUJAR LA IMAGEN DENTRO DE LA ESFERA ===
+                if (e.imageObject.complete && e.imageObject.naturalWidth > 0 && alphaEsfera > 0.5) {
+                    ctx.save();
+                    ctx.globalAlpha = alphaEsfera - 0.2;
+                    ctx.beginPath();
+                    // Creamos una máscara circular para recortar la imagen
+                    ctx.arc(eX, eY, esHover ? radioFinalPerspectiva * 1.3 : radioFinalPerspectiva * 0.95, 0, Math.PI * 2);
+                    ctx.clip();
+                    // Dibujamos la imagen centrada y escalada en 3D
+                    const imgSize = (esHover ? radioFinalPerspectiva * 2.6 : radioFinalPerspectiva * 1.9);
+                    ctx.drawImage(e.imageObject, eX - imgSize / 2, eY - imgSize / 2, imgSize, imgSize);
+                    ctx.restore();
+                }
+            }
+        }
+        if (cursorEnEsfera && !modalAbierto) document.body.style.cursor = 'pointer'; else if (estaArrastrando) document.body.style.cursor = 'grabbing'; else document.body.style.cursor = 'default';
+        ctx.globalCompositeOperation = 'source-over'; requestAnimationFrame(animate);
+    }
+    animate();
+/// === SISTEMA DE AUDIO DE FONDO MEJORADO ===
+    const musica = document.getElementById('musicaFondo');
+
+    if (!musica) {
+        console.error("❌ ERROR: La etiqueta <audio id='musicaFondo'> no está dentro de galaxya.html");
+    } else {
+        console.log("✅ ÉXITO: ¡La galaxia encontró el reproductor de música!");
+    }
+
+    // Se activa inmediatamente al hacer clic o arrastrar el fondo negro
+    window.addEventListener('pointerdown', () => {
+        if (musica && musica.paused) {
+            musica.volume = 0.3; // Volumen suave ambiental
+            musica.play()
+                .then(() => console.log("🔊 ¡Música iniciada con éxito!"))
+                .catch(error => console.log("Esperando una interacción directa...", error));
+        }
+    });
+});

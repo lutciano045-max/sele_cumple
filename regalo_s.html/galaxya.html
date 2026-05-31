@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuásar Corazón - TON 618</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #010105;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            user-select: none;
+        }
+
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* Título guía superior */
+        .hud {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            color: rgba(255, 255, 255, 0.85);
+            z-index: 10;
+            pointer-events: none;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 50, 100, 0.5);
+        }
+        .hud h1 { margin: 0; font-size: 18px; font-weight: 400; }
+        .hud p { margin: 5px 0 0 0; font-size: 11px; opacity: 0.6; text-transform: uppercase; }
+
+        /* TARJETA FLOTANTE (MODAL DE RECUERDOS) */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(1, 1, 5, 0.7);
+            z-index: 20;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            backdrop-filter: blur(4px);
+        }
+
+        /* Cuando el modal está activo */
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Diseño de la tarjeta estilo Cristal/Espacial */
+        .tarjeta-recuerdo {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px;
+            padding: 25px;
+            width: 85%;
+            max-width: 400px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 30px rgba(255, 50, 130, 0.2);
+            transform: scale(0.7);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modal-overlay.active .tarjeta-recuerdo {
+            transform: scale(1);
+        }
+
+        /* Contenedor de la Imagen dentro de la tarjeta */
+        .tarjeta-recuerdo img {
+            width: 100%;
+            max-height: 250px;
+            object-fit: cover;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            margin-bottom: 15px;
+            background-color: rgba(255,255,255,0.05); /* fondo temporal */
+        }
+
+    .tarjeta-recuerdo h2 {
+        margin: 10px 0;
+        font-size: 22px;
+        letter-spacing: 1px;
+        background: linear-gradient(45deg, #ff5e62, #ff9966);
+        -webkit-background-clip: text;
+        background-clip: text; /* Propiedad estándar que quita la advertencia */
+        -webkit-text-fill-color: transparent;
+        color: transparent; /* Propiedad estándar de respaldo */
+}
+
+        .tarjeta-recuerdo p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 20px;
+        }
+
+        /* Botón para cerrar la tarjeta */
+        .btn-cerrar {
+            background: linear-gradient(45deg, #ff3366, #ff5e62);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            font-size: 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 51, 102, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-cerrar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(255, 51, 102, 0.5);
+        }
+
+        /* === 📱 ADAPTACIÓN PARA DISPOSITIVOS MÓVILES === */
+        @media (max-width: 600px) {
+            /* Centramos el título superior en el celular */
+            .hud {
+                top: 15px;
+                left: 15px;
+                right: 15px;
+                text-align: center;
+            }
+            .hud h1 {
+                font-size: 16px !important;
+                margin-bottom: 3px;
+            }
+            .hud p {
+                font-size: 11px !important;
+            }
+
+            /* Ajustamos la tarjeta del recuerdo para que flote perfecta en el centro del celular */
+            .tarjeta-recuerdo {
+                width: 85% !important; /* Ocupa casi todo el ancho de la pantalla móvil */
+                max-width: 320px !important;
+                padding: 20px !important;
+                box-sizing: border-box;
+                
+                /* Forzamos el centrado absoluto en pantallas chicas */
+                top: 50% !important;
+                left: 50% !important;
+                transform: translate(-50%, -50%) !important;
+            }
+
+            .tarjeta-recuerdo h3 {
+                font-size: 18px !important;
+                margin-bottom: 10px;
+            }
+
+            .tarjeta-recuerdo p {
+                font-size: 13px !important;
+                line-height: 1.5;
+                margin-bottom: 15px;
+            }
+
+            .btn-cerrar {
+                padding: 8px 20px;
+                font-size: 13px;
+                width: 100%; /* Botón a lo ancho para que sea fácil de tocar con el pulgar */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hud">
+        <h1>SISTEMA TON 618-H</h1>
+        <p>Núcleo de Singularidad Pasional / Haz clic en las esferas celestes</p>
+    </div>
+
+    <canvas id="galaxyCanvas"></canvas>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="tarjeta-recuerdo">
+            <img id="modalImg" src="" alt="Nuestro Recuerdo">
+            <h2 id="modalTitle">Título del Recuerdo</h2>
+            <p id="modalText">Texto descriptivo de tu momento especial aquí.</p>
+            <button class="btn-cerrar" id="btnCerrar">Regresar al espacio</button>
+        </div>
+    </div>
+
+
+</div>
+<div class="modal-overlay" id="modalOverlay">
+        </div>
+
+    <audio id="musicaFondo" loop>
+        <source src="audio/musica.mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="javascrpit/galaxia.js"></script>
+
+</body>
+</html>

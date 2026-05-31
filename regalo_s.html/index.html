@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regalo Especial</title>
+
+<body>    
+    <style>
+        /* CSS Integrado para asegurar el diseño y la transición */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #020208;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .inicio {
+            text-align: center;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            /* Suavizado para la animación de entrada a la galaxia */
+            transition: transform 2.5s cubic-bezier(0.1, 0.8, 0.3, 1), 
+                        opacity 2s ease-in-out, 
+                        filter 2s ease-in-out;
+        }
+
+        .inicio h2 {
+            font-size: 28px;
+            margin: 0;
+            text-shadow: 0 0 15px rgba(255, 105, 180, 0.6);
+        }
+
+        .inicio img {
+            max-width: 200px;
+            border-radius: 15px;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(255, 75, 43, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(255, 75, 43, 0.6);
+        }
+
+        /* EFECTO HIPERESPACIO AL HACER CLIC */
+        .ingresando-galaxia {
+            transform: scale(4);
+            opacity: 0;
+            filter: blur(8px);
+            pointer-events: none;
+        }
+
+        /* === 📱 ADAPTACIÓN PARA DISPOSITIVOS MÓVILES === */
+        @media (max-width: 600px) {
+            .inicio h2 {
+                font-size: 22px; /* Texto un poco más chico para que no se parta feo */
+                padding: 0 20px;
+            }
+
+            .inicio img {
+                max-width: 160px; /* Reducimos la imagen de portada para ganar espacio */
+                border-radius: 12px;
+            }
+
+            button {
+                padding: 10px 22px;
+                font-size: 15px; /* Botón más cómodo para pulsar con el dedo */
+            }
+        }
+    </style>
+
+    <section class="inicio" id="seccionInicio">
+        <h2>Feliz cumpleaños hermosa ❤️</h2>
+        <img src="img/hola123.gif" alt="gif de osos">
+
+        <a href="galaxya.html" id="btnComenzar">
+            <button>Haz clic para empezar</button>
+        </a>
+    </section>
+
+<audio id="musicaFondo" loop>
+        <source src="audio/musica.mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="javascrpit/transicion.js"></script>
+</body>
+</body>
+</html>

@@ -1,0 +1,68 @@
+
+body{ 
+    font-size: 16px;
+    background-color: rgb(97, 16, 123);
+    margin: 0;
+}
+
+section{
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+    /* ---------------------- */
+    margin-top: 15em;
+    gap: 1.5em;
+    /* ---------------------------- */
+
+    max-width: 50em;       /* 1. Limita el ancho horizontal a un tamaño perfecto */
+    width: 90%;            /* 2. Hace que sea responsivo si lo abren en un celular */
+    height: 30em;
+    margin-left: auto;     /* 3. Junto con margin-right, centra la sección entera */
+    margin-right: auto;    /* en medio del fondo violeta7*/
+    /* ------------------------------ */
+
+    background-color: #261645;
+    border-radius: 1.5em;
+    border: solid rgb(255, 255, 255, 0.7);
+    opacity: 0.9;
+    /*-------------------------------  */
+
+
+}
+
+h2{
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    color: white;
+    animation: lucesNeon 6s infinite;
+}
+
+@keyframes lucesNeon {
+    0%, 100% {
+        text-shadow: 0 0 10px #ffffff, 0 0 20px #ffffff;
+        color: #ffffff;
+    }
+    33% {
+        text-shadow: 0 0 10px #ffffff, 0 0 20px #ffffff;
+        color: #ffffff;
+    }
+    66% {
+        text-shadow: 0 0 10px #ffffff, 0 0 20px #ffffff;
+        color: #ffffff
+    }
+}
+
+
+img{
+    width: 20em;
+    height: auto;
+}
+
+
+button{
+    width: 15em;    
+    height: auto;
+    padding: 0.4em 0.8em;
+    cursor: pointer;
+    font-size: 1.1em;    
+ } 

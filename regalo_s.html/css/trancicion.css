@@ -1,0 +1,14 @@
+/* Suavizado de la sección antes de activar el efecto */
+.inicio {
+    transition: transform 2.5s cubic-bezier(0.1, 0.8, 0.3, 1), 
+                opacity 2s ease-in-out, 
+                filter 2s ease-in-out;
+}
+
+/* Efecto de "hiperespacio" al hacer clic (Zoom masivo + Blur + Desvanecer) */
+.ingresando-galaxia {
+    transform: scale(4);
+    opacity: 0;
+    filter: blur(8px);
+    pointer-events: none; /* Desactiva el botón para evitar clics repetidos */
+}
