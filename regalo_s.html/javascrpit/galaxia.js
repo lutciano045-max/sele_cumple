@@ -12,7 +12,7 @@ window.addEventListener('load', () => {
     });
 
     // =========================================================================
-    // 🌌 VARIABLES DE CÁMARA 3D, ZOOM Y ANIMACIÓN (¡ESTO ERA LO QUE FALTA!)
+    // 🌌 DECLARACIÓN DE VARIABLES DE CONTROL (¡ESTO CORRIGE EL CRASH EN PC!)
     // =========================================================================
     let introProgress = 0;       
     let zoomCámara = 3.8; 
@@ -25,7 +25,7 @@ window.addEventListener('load', () => {
     let targetRotX = 0, targetRotY = 0; 
     const fov = 600; 
 
-    // Control de arrastre (Click & Drag)
+    // Control de arrastre general (Click & Drag / Touch)
     let estaArrastrando = false;
     let clickStartX = 0, clickStartY = 0;
     let rotStartX = 0, rotStartY = 0;
@@ -33,11 +33,15 @@ window.addEventListener('load', () => {
     let esferaApuntada = null;
     let modalAbierto = false;
 
+    // Variables específicas para el Zoom Táctil (Móviles)
+    let toqueInicioDistancia = 0;
+    let zoomInicio = 1.65;
+
     // =========================================================================
-    // 📱 INTERACCIONES (MOUSE, TOUCH Y ZOOM REORGANIZADOS SIN DUPLICADOS)
+    // 🖥️ INTERACCIONES PARA COMPUTADORA (MOUSE & RUEDA)
     // =========================================================================
     
-    // Zoom con la rueda del ratón
+    // Zoom con la rueda del ratón en PC
     canvas.addEventListener('wheel', (e) => {
         if (modalAbierto) return;
         e.preventDefault();
@@ -46,7 +50,7 @@ window.addEventListener('load', () => {
         if (zoomObjetivo > maxZoom) zoomObjetivo = maxZoom;
     }, { passive: false });
 
-    // Eventos de Mouse
+    // Arrastre con Click para rotación en PC
     canvas.addEventListener('mousedown', (e) => {
         if (modalAbierto) return;
         estaArrastrando = true;
@@ -77,40 +81,74 @@ window.addEventListener('load', () => {
         if (esferaApuntada && !modalAbierto && !estaArrastrando) abrirTarjeta(esferaApuntada);
     });
 
-    // Soporte para pantallas táctiles (Celulares)
+    // =========================================================================
+    // 📱 INTERACCIONES PARA MÓVILES (ROTACIÓN CON 1 DEDO Y PELLIZCO PARA ZOOM)
+    // =========================================================================
+    
+    // Función auxiliar para medir la distancia matemática entre dos dedos
+    function obtenerDistanciaToques(t1, t2) {
+        return Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+    }
+
     canvas.addEventListener('touchstart', (e) => {
         if (modalAbierto) return;
-        estaArrastrando = true;
-        const toque = e.touches[0];
-        clickStartX = toque.clientX;
-        clickStartY = toque.clientY;
-        rotStartX = targetRotX;
-        rotStartY = targetRotY;
-        mouseX = toque.clientX;
-        mouseY = toque.clientY;
+        
+        if (e.touches.length === 1) {
+            // Un solo dedo tocando: Activa rotación orbital
+            estaArrastrando = true;
+            const toque = e.touches[0];
+            clickStartX = toque.clientX;
+            clickStartY = toque.clientY;
+            rotStartX = targetRotX;
+            rotStartY = targetRotY;
+            mouseX = toque.clientX;
+            mouseY = toque.clientY;
+        } else if (e.touches.length === 2) {
+            // Dos dedos tocando: Activa pellizco para Zoom cosmico
+            estaArrastrando = false; // Detiene la rotación para evitar movimientos bruscos
+            toqueInicioDistancia = obtenerDistanciaToques(e.touches[0], e.touches[1]);
+            zoomInicio = zoomObjetivo;
+        }
     });
 
     window.addEventListener('touchmove', (e) => {
-        if (estaArrastrando) {
+        if (modalAbierto) return;
+
+        if (e.touches.length === 1 && estaArrastrando) {
+            // Mover un solo dedo: Rota la galaxia
             if (e.cancelable) e.preventDefault(); 
             const toque = e.touches[0];
             mouseX = toque.clientX;
             mouseY = toque.clientY;
+
             const deltaX = toque.clientX - clickStartX;
             const deltaY = toque.clientY - clickStartY;
             targetRotY = rotStartY + (deltaX * 0.006);
             targetRotX = rotStartX + (deltaY * 0.006);
+
             if (targetRotX > Math.PI / 2.1) targetRotX = Math.PI / 2.1;
             if (targetRotX < -Math.PI / 2.1) targetRotX = -Math.PI / 2.1;
+        } else if (e.touches.length === 2) {
+            // Mover dos dedos: Cambia el zoom proporcionalmente al pellizco
+            if (e.cancelable) e.preventDefault();
+            const distNueva = obtenerDistanciaToques(e.touches[0], e.touches[1]);
+            if (toqueInicioDistancia > 0) {
+                const factor = distNueva / toqueInicioDistancia;
+                zoomObjetivo = zoomInicio * factor;
+                // Mantener el zoom dentro de los límites estéticos establecidos
+                if (zoomObjetivo < minZoom) zoomObjetivo = minZoom;
+                if (zoomObjetivo > maxZoom) zoomObjetivo = maxZoom;
+            }
         }
     }, { passive: false });
 
     window.addEventListener('touchend', () => {
         estaArrastrando = false;
+        toqueInicioDistancia = 0;
     });
 
     // =========================================================================
-    // 📸 CONFIGURACIÓN DE LAS 8 ESFERAS DE RECUERDOS (RUTAS LIMPIAS)
+    // 📸 CONFIGURACIÓN DE LAS 8 ESFERAS DE RECUERDOS
     // =========================================================================
     const esferasDatos = [
         { titulo: 'Nuestra pirmera monada juntos.', texto: 'Aquel dia pasamos la tarde juntos y te lleve en la bici hasta la parada.', imagen: 'img/sele3.jpeg' },
@@ -130,7 +168,7 @@ window.addEventListener('load', () => {
         esfera.radioEsfera = 38; 
         esfera.imageObject = new Image();
         esfera.imageObject.src = esfera.imagen;
-        esfera.velocidad = 0;
+        esfera.velocidad = 0; 
     });
 
     // === PARTÍCULAS DE LOS CHORROS POLARES (JETS) ===
@@ -254,7 +292,7 @@ window.addEventListener('load', () => {
             }
         }
 
-        // 2. RENDER ESTELA (POLVO DE LAS ÓRBITAS)
+        // 2. RENDER ESTELA (POLVO CÓSMICO)
         for (let i = 0; i < numParticulasDisco; i++) {
             const p = particulasDisco[i];
             p.angulo += p.velocidadBase * 0.65; 
@@ -277,7 +315,7 @@ window.addEventListener('load', () => {
         let factorBrote = 0; if (introProgress > 0.2) { const tBrote = Math.min(1, (introProgress - 0.2) / 0.8); const periodo = 0.35; factorBrote = Math.pow(2, -10 * tBrote) * Math.sin((tBrote - periodo / 4) * (Math.PI * 2) / periodo) + 1; }
         if (factorBrote > 0) dibujarCorazonSingularidad(cx, cy, 0.90 * factorBrote * zoomCámara);
 
-        // 4. ÓRBITAS 3D DE LAS ESFERAS CON IMÁGENES
+        // 4. ÓRBITAS DE LAS ESFERAS CON IMÁGENES
         let cursorEnEsfera = false; if (!modalAbierto) esferaApuntada = null;
         for (let i = 0; i < esferasDatos.length; i++) {
             const e = esferasDatos[i];
@@ -295,7 +333,7 @@ window.addEventListener('load', () => {
             if (distanciaMouse < (radioFinalPerspectiva * zoomCámara) + 12 && !modalAbierto && introProgress > 0.85) { esHover = true; cursorEnEsfera = true; esferaApuntada = e; }
 
             if (alphaEsfera > 0) {
-                // Aura luminosa
+                // Aura del planeta
                 ctx.save();
                 ctx.globalAlpha = alphaEsfera;
                 ctx.beginPath();
@@ -303,7 +341,7 @@ window.addEventListener('load', () => {
                 ctx.shadowBlur = esHover ? 50 : 30; ctx.shadowColor = e.color;
                 ctx.strokeStyle = 'rgba(255, 60, 90, 0.22)'; ctx.lineWidth = 1; ctx.stroke();
                 
-                // Base de esfera blanca
+                // Esfera interactiva
                 ctx.beginPath();
                 ctx.arc(eX, eY, esHover ? radioFinalPerspectiva * 1.35 : radioFinalPerspectiva, 0, Math.PI * 2);
                 ctx.fillStyle = esHover ? '#ffffff' : e.color; ctx.fill();
