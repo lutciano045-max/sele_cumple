@@ -38,13 +38,13 @@
         .hud h1 { margin: 0; font-size: 18px; font-weight: 400; }
         .hud p { margin: 5px 0 0 0; font-size: 11px; opacity: 0.6; text-transform: uppercase; }
 
-        /* TARJETA FLOTANTE (MODAL DE RECUERDOS) */
+        /* ===== TARJETA FLOTANTE (MODAL DE RECUERDOS) CORREGIDA ===== */
         .modal-overlay {
-            position: absolute;
+            position: fixed; /* Cambiado a fixed para asegurar el centrado en scroll */
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             background: rgba(1, 1, 5, 0.7);
             z-index: 20;
             display: flex;
@@ -54,6 +54,8 @@
             pointer-events: none;
             transition: opacity 0.5s ease;
             backdrop-filter: blur(4px);
+            padding: 20px; /* Margen de seguridad para que la tarjeta no toque los bordes */
+            box-sizing: border-box;
         }
 
         /* Cuando el modal está activo */
@@ -70,13 +72,16 @@
             -webkit-backdrop-filter: blur(16px);
             border-radius: 20px;
             padding: 25px;
-            width: 85%;
+            width: 100%; /* Ajustado al 100% del contenedor padre */
             max-width: 400px;
+            max-height: 85vh; /* Evita que la tarjeta sea más alta que la pantalla del celular */
+            overflow-y: auto; /* Permite scroll interno si el contenido es muy largo */
             color: white;
             text-align: center;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 30px rgba(255, 50, 130, 0.2);
             transform: scale(0.7);
             transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative; /* Asegura que Flexbox gestione su posición */
         }
 
         .modal-overlay.active .tarjeta-recuerdo {
@@ -94,16 +99,16 @@
             background-color: rgba(255,255,255,0.05); /* fondo temporal */
         }
 
-    .tarjeta-recuerdo h2 {
-        margin: 10px 0;
-        font-size: 22px;
-        letter-spacing: 1px;
-        background: linear-gradient(45deg, #ff5e62, #ff9966);
-        -webkit-background-clip: text;
-        background-clip: text; /* Propiedad estándar que quita la advertencia */
-        -webkit-text-fill-color: transparent;
-        color: transparent; /* Propiedad estándar de respaldo */
-}
+        .tarjeta-recuerdo h2 {
+            margin: 10px 0;
+            font-size: 22px;
+            letter-spacing: 1px;
+            background: linear-gradient(45deg, #ff5e62, #ff9966);
+            -webkit-background-clip: text;
+            background-clip: text; 
+            -webkit-text-fill-color: transparent;
+            color: transparent; 
+        }
 
         .tarjeta-recuerdo p {
             font-size: 14px;
@@ -124,6 +129,7 @@
             box-shadow: 0 4px 15px rgba(255, 51, 102, 0.3);
             transition: transform 0.2s, box-shadow 0.2s;
         }
+        
         .btn-cerrar:hover {
             transform: scale(1.05);
             box-shadow: 0 6px 20px rgba(255, 51, 102, 0.5);
@@ -131,7 +137,6 @@
 
         /* === 📱 ADAPTACIÓN PARA DISPOSITIVOS MÓVILES === */
         @media (max-width: 600px) {
-            /* Centramos el título superior en el celular */
             .hud {
                 top: 15px;
                 left: 15px;
@@ -146,20 +151,11 @@
                 font-size: 11px !important;
             }
 
-            /* Ajustamos la tarjeta del recuerdo para que flote perfecta en el centro del celular */
             .tarjeta-recuerdo {
-                width: 85% !important; /* Ocupa casi todo el ancho de la pantalla móvil */
-                max-width: 320px !important;
-                padding: 20px !important;
-                box-sizing: border-box;
-                
-                /* Forzamos el centrado absoluto en pantallas chicas */
-                top: 50% !important;
-                left: 50% !important;
-                transform: translate(-50%, -50%) !important;
+                padding: 15px !important; /* Menos relleno en celulares para ahorrar espacio */
             }
 
-            .tarjeta-recuerdo h3 {
+            .tarjeta-recuerdo h2 {
                 font-size: 18px !important;
                 margin-bottom: 10px;
             }
@@ -171,9 +167,13 @@
             }
 
             .btn-cerrar {
-                padding: 8px 20px;
-                font-size: 13px;
-                width: 100%; /* Botón a lo ancho para que sea fácil de tocar con el pulgar */
+                padding: 10px 20px;
+                font-size: 14px;
+                width: 100%; /* El botón ocupará todo el ancho disponible para facilitar el toque */
+            }
+            
+            .tarjeta-recuerdo img {
+                max-height: 180px; /* Reducimos la altura máxima de la imagen en celulares */
             }
         }
     </style>
@@ -196,20 +196,11 @@
         </div>
     </div>
 
-
-</div>
-<div class="modal-overlay" id="modalOverlay">
-        </div>
-
     <audio id="musicaFondo" loop>
         <source src="audio/musica.mp3" type="audio/mpeg">
     </audio>
 
-</div>
-
     <script src="javascrpit/galaxia.js"></script>
-</body>
-</html>
 
 </body>
 </html>
