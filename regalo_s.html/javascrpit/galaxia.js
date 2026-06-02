@@ -12,13 +12,15 @@ window.addEventListener('load', () => {
     });
 
     // =========================================================================
-    // 🌌 DECLARACIÓN DE VARIABLES DE CONTROL (¡ESTO CORRIGE EL CRASH EN PC!)
+    // 🌌 DECLARACIÓN DE VARIABLES DE CONTROL (CON DETECCIÓN DE CELULARES)
     // =========================================================================
+    let esCelular = window.innerWidth < 768;
+
     let introProgress = 0;       
-    let zoomCámara = 3.8; 
-    let zoomObjetivo = 1.65; 
-    const minZoom = 0.5;     
-    const maxZoom = 3.5;     
+    let zoomCámara = esCelular ? 5.5 : 3.8;      
+    let zoomObjetivo = esCelular ? 0.85 : 1.65;  
+    let minZoom = esCelular ? 0.25 : 0.5;     
+    let maxZoom = esCelular ? 1.6 : 3.5;     
 
     // Variables de rotación tridimensional
     let rotX = 0, rotY = 0;      
@@ -41,7 +43,6 @@ window.addEventListener('load', () => {
     // 🖥️ INTERACCIONES PARA COMPUTADORA (MOUSE & RUEDA)
     // =========================================================================
     
-    // Zoom con la rueda del ratón en PC
     canvas.addEventListener('wheel', (e) => {
         if (modalAbierto) return;
         e.preventDefault();
@@ -50,7 +51,6 @@ window.addEventListener('load', () => {
         if (zoomObjetivo > maxZoom) zoomObjetivo = maxZoom;
     }, { passive: false });
 
-    // Arrastre con Click para rotación en PC
     canvas.addEventListener('mousedown', (e) => {
         if (modalAbierto) return;
         estaArrastrando = true;
@@ -85,7 +85,6 @@ window.addEventListener('load', () => {
     // 📱 INTERACCIONES PARA MÓVILES (ROTACIÓN CON 1 DEDO Y PELLIZCO PARA ZOOM)
     // =========================================================================
     
-    // Función auxiliar para medir la distancia matemática entre dos dedos
     function obtenerDistanciaToques(t1, t2) {
         return Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
     }
@@ -94,7 +93,6 @@ window.addEventListener('load', () => {
         if (modalAbierto) return;
         
         if (e.touches.length === 1) {
-            // Un solo dedo tocando: Activa rotación orbital
             estaArrastrando = true;
             const toque = e.touches[0];
             clickStartX = toque.clientX;
@@ -104,8 +102,7 @@ window.addEventListener('load', () => {
             mouseX = toque.clientX;
             mouseY = toque.clientY;
         } else if (e.touches.length === 2) {
-            // Dos dedos tocando: Activa pellizco para Zoom cosmico
-            estaArrastrando = false; // Detiene la rotación para evitar movimientos bruscos
+            estaArrastrando = false; 
             toqueInicioDistancia = obtenerDistanciaToques(e.touches[0], e.touches[1]);
             zoomInicio = zoomObjetivo;
         }
@@ -115,7 +112,6 @@ window.addEventListener('load', () => {
         if (modalAbierto) return;
 
         if (e.touches.length === 1 && estaArrastrando) {
-            // Mover un solo dedo: Rota la galaxia
             if (e.cancelable) e.preventDefault(); 
             const toque = e.touches[0];
             mouseX = toque.clientX;
@@ -129,13 +125,11 @@ window.addEventListener('load', () => {
             if (targetRotX > Math.PI / 2.1) targetRotX = Math.PI / 2.1;
             if (targetRotX < -Math.PI / 2.1) targetRotX = -Math.PI / 2.1;
         } else if (e.touches.length === 2) {
-            // Mover dos dedos: Cambia el zoom proporcionalmente al pellizco
             if (e.cancelable) e.preventDefault();
             const distNueva = obtenerDistanciaToques(e.touches[0], e.touches[1]);
             if (toqueInicioDistancia > 0) {
                 const factor = distNueva / toqueInicioDistancia;
                 zoomObjetivo = zoomInicio * factor;
-                // Mantener el zoom dentro de los límites estéticos establecidos
                 if (zoomObjetivo < minZoom) zoomObjetivo = minZoom;
                 if (zoomObjetivo > maxZoom) zoomObjetivo = maxZoom;
             }
@@ -333,7 +327,6 @@ window.addEventListener('load', () => {
             if (distanciaMouse < (radioFinalPerspectiva * zoomCámara) + 12 && !modalAbierto && introProgress > 0.85) { esHover = true; cursorEnEsfera = true; esferaApuntada = e; }
 
             if (alphaEsfera > 0) {
-                // Aura del planeta
                 ctx.save();
                 ctx.globalAlpha = alphaEsfera;
                 ctx.beginPath();
@@ -341,13 +334,11 @@ window.addEventListener('load', () => {
                 ctx.shadowBlur = esHover ? 50 : 30; ctx.shadowColor = e.color;
                 ctx.strokeStyle = 'rgba(255, 60, 90, 0.22)'; ctx.lineWidth = 1; ctx.stroke();
                 
-                // Esfera interactiva
                 ctx.beginPath();
                 ctx.arc(eX, eY, esHover ? radioFinalPerspectiva * 1.35 : radioFinalPerspectiva, 0, Math.PI * 2);
                 ctx.fillStyle = esHover ? '#ffffff' : e.color; ctx.fill();
                 ctx.restore();
 
-                // Recorte e inserción de la foto
                 if (e.imageObject.complete && e.imageObject.naturalWidth > 0 && alphaEsfera > 0.5) {
                     ctx.save();
                     ctx.globalAlpha = alphaEsfera - 0.2;
