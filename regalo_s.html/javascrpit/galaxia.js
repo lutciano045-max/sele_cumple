@@ -6,28 +6,39 @@ window.addEventListener('load', () => {
     let width = canvas.width = window.innerWidth;
     let height = canvas.height = window.innerHeight;
 
+    // Detectamos si es celular desde el primer segundo
+    let esCelular = window.innerWidth < 768;
+
+    // =========================================================================
+    // 🌌 ACTUALIZACIÓN EN TIEMPO REAL (RESIZE)
+    // =========================================================================
     window.addEventListener('resize', () => {
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
+
+        let eraCelular = esCelular;
+        esCelular = window.innerWidth < 768;
+
+        if (eraCelular !== esCelular) {
+            zoomObjetivo = esCelular ? 0.85 : 1.65;
+            minZoom = esCelular ? 0.25 : 0.5;
+            maxZoom = esCelular ? 1.6 : 3.5;
+        }
     });
 
     // =========================================================================
-    // 🌌 DECLARACIÓN DE VARIABLES DE CONTROL (CON DETECCIÓN DE CELULARES)
+    // 🌌 DECLARACIÓN DE VARIABLES DE CONTROL
     // =========================================================================
-    let esCelular = window.innerWidth < 768;
-
     let introProgress = 0;       
     let zoomCámara = esCelular ? 5.5 : 3.8;      
     let zoomObjetivo = esCelular ? 0.85 : 1.65;  
     let minZoom = esCelular ? 0.25 : 0.5;     
     let maxZoom = esCelular ? 1.6 : 3.5;     
 
-    // Variables de rotación tridimensional
     let rotX = 0, rotY = 0;      
     let targetRotX = 0, targetRotY = 0; 
     const fov = 600; 
 
-    // Control de arrastre general (Click & Drag / Touch)
     let estaArrastrando = false;
     let clickStartX = 0, clickStartY = 0;
     let rotStartX = 0, rotStartY = 0;
@@ -35,14 +46,12 @@ window.addEventListener('load', () => {
     let esferaApuntada = null;
     let modalAbierto = false;
 
-    // Variables específicas para el Zoom Táctil (Móviles)
     let toqueInicioDistancia = 0;
     let zoomInicio = 1.65;
 
     // =========================================================================
     // 🖥️ INTERACCIONES PARA COMPUTADORA (MOUSE & RUEDA)
     // =========================================================================
-    
     canvas.addEventListener('wheel', (e) => {
         if (modalAbierto) return;
         e.preventDefault();
@@ -84,7 +93,6 @@ window.addEventListener('load', () => {
     // =========================================================================
     // 📱 INTERACCIONES PARA MÓVILES (ROTACIÓN CON 1 DEDO Y PELLIZCO PARA ZOOM)
     // =========================================================================
-    
     function obtenerDistanciaToques(t1, t2) {
         return Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
     }
@@ -145,13 +153,13 @@ window.addEventListener('load', () => {
     // 📸 CONFIGURACIÓN DE LAS 8 ESFERAS DE RECUERDOS
     // =========================================================================
     const esferasDatos = [
-        { titulo: 'Nuestra pirmera monada juntos.', texto: 'Aquel dia pasamos la tarde juntos y te lleve en la bici hasta la parada.', imagen: 'img/sele3.jpeg' },
+        { titulo: 'Nuestra primera monada juntos.', texto: 'Aquel dia pasamos la tarde juntos y te lleve en la bici hasta la parada.', imagen: 'img/sele3.jpeg' },
         { titulo: 'La vez que vimos la mejor pelicula de todos los tiempos.', texto: 'Bailamos y boludeamos en la calle muy tarde. ', imagen: 'img/sele1.jpeg' },
-        { titulo: 'Nuestras Boludeces', texto: 'Una de las mejores noche que pase con vs, aunque aundaba muy seco 😅.', imagen: 'img/sele2.jpeg' },
+        { titulo: 'Nuestras Boludeces', texto: 'Una de las mejores noches que pase con vs, aunque aundaba muy seco 😅.', imagen: 'img/sele2.jpeg' },
         { titulo: 'Primer Viaje', texto: 'Una linda mañana con mates, aunque hizo frio y nos agarro la lluvia.', imagen: 'img/sele5.jpeg' },
         { titulo: 'Tu Sonrisa', texto: 'Mi razon para estar feliz.', imagen: 'img/sele6.jpeg' },
         { titulo: 'Mi mascarilla', texto: 'Cuando me hice mi primera mascarilla con vs, y me dejaste solo porque te dormiste 😒.', imagen: 'img/sele4.jpeg' },
-        { titulo: 'Mi hogar', texto: 'Foto tuyas de pequeña me hacen dar cuenta que sos mi hogar y alguien muy delicada.', imagen: 'img/sele7.jpeg' },
+        { titulo: 'Mi hogar', texto: 'Fotos tuyas de pequeña me hacen dar cuenta que sos mi hogar y alguien muy delicada.', imagen: 'img/sele7.jpeg' },
         { titulo: 'Fenix', texto: 'Nuestra historia fue media parecida a la del fenix, que resurge de las cenizas para volver a ser lo que fue.', imagen: 'img/sele8.jpeg' }
     ];
 
@@ -159,7 +167,6 @@ window.addEventListener('load', () => {
         esfera.distancia = Math.random() * (550 - 150) + 150; 
         esfera.angulo = Math.random() * Math.PI * 2;
         esfera.color = '#ffffff'; 
-        esfera.radioEsfera = 38; 
         esfera.imageObject = new Image();
         esfera.imageObject.src = esfera.imagen;
         esfera.velocidad = 0; 
@@ -266,10 +273,23 @@ window.addEventListener('load', () => {
         ctx.fillStyle = 'rgba(1, 1, 5, 0.22)'; ctx.fillRect(0, 0, width, height);
         ctx.globalCompositeOperation = 'lighter';
         const cx = width / 2; const cy = height / 2;
+        
         rotX += (targetRotX - rotX) * 0.05; rotY += (targetRotY - rotY) * 0.05;
         if (introProgress < 1) { introProgress += (1.005 - introProgress) * 0.015; if (introProgress > 0.999) introProgress = 1; }
         zoomCámara += (zoomObjetivo - zoomCámara) * 0.05;
+        
         const cosX = Math.cos(rotX), sinX = Math.sin(rotX); const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+
+        // --- CÁLCULO DE RADIO DINÁMICO ---
+        let proporcionPantalla = Math.min(width, height) / 800; 
+        
+        let radioBase = esCelular ? 22 : 38;
+        let radioDinamico = radioBase * proporcionPantalla;
+        
+        let limiteMinimo = esCelular ? 12 : 18;
+        let limiteMaximo = esCelular ? 26 : 45;
+        
+        radioDinamico = Math.max(limiteMinimo, Math.min(radioDinamico, limiteMaximo));
 
         // 1. RENDER EXPLOSIÓN INICIAL 3D
         for (let i = 0; i < particulasExplosion.length; i++) {
@@ -322,8 +342,12 @@ window.addEventListener('load', () => {
             let perspectivaPlaneta = (fov / (fov + eZ_rotFinal)) * zoomCámara;
             if (perspectivaPlaneta > 8) perspectivaPlaneta = 8;
             const eX = cx + eX_rot * perspectivaPlaneta; const eY = cy + eY_rot * perspectivaPlaneta;
+            
             const dx = mouseX - eX; const dy = mouseY - eY; const distanciaMouse = Math.sqrt(dx * dx + dy * dy);
-            let esHover = false; const radioFinalPerspectiva = e.radioEsfera * (perspectivaPlaneta / zoomCámara) * Math.min(1, introProgress);
+            let esHover = false; 
+            
+            const radioFinalPerspectiva = radioDinamico * (perspectivaPlaneta / zoomCámara) * Math.min(1, introProgress);
+            
             if (distanciaMouse < (radioFinalPerspectiva * zoomCámara) + 12 && !modalAbierto && introProgress > 0.85) { esHover = true; cursorEnEsfera = true; esferaApuntada = e; }
 
             if (alphaEsfera > 0) {
@@ -351,9 +375,12 @@ window.addEventListener('load', () => {
                 }
             }
         }
+        
         if (cursorEnEsfera && !modalAbierto) document.body.style.cursor = 'pointer'; else if (estaArrastrando) document.body.style.cursor = 'grabbing'; else document.body.style.cursor = 'default';
         ctx.globalCompositeOperation = 'source-over'; requestAnimationFrame(animate);
     }
+    
+    // ¡ESTE ERA EL COMANDO QUE SE HABÍA BORRADO Y DEJABA LA PANTALLA NEGRA!
     animate();
 
     // === REPRODUCTOR DE MÚSICA AMBIENTAL ===
@@ -362,7 +389,6 @@ window.addEventListener('load', () => {
         if (musica && musica.paused) {
             musica.volume = 0.3; 
             musica.play()
-                .then(() => console.log("🔊 ¡Música iniciada con éxito!"))
                 .catch(error => console.log("Esperando interacción...", error));
         }
     });
